@@ -849,12 +849,36 @@ class TCTData {
         });
     }
 
+    candidateIssuesForOseg() {
+        const canIssues = {}
+
+        for(const candidatePk of this.getAllCandidatePKs())
+        {
+            const can = this.getIssueScoreForCandidate(candidatePk).map((iss) => {
+                return {
+                    issueId: iss.fields.issue,
+                    issueScore: iss.fields.issue_score,
+                    weight: 1
+                }
+            });
+            canIssues[candidatePk] = can;
+        }
+
+        console.log(JSON.stringify(canIssues))
+        return canIssues;
+    }
+
     exportToOseg() {
         const oseg = {
-            candidates : ["THIS WILL NEED TO BE DONE FROM THE CODE 1 TOOL"],
+            candidates : [],
             states : this.statesAsOseg(),
             issues : this.issuesAsOseg(),
-            questions : this.questionsAsOseg()
+            scenarioSides: [
+                {
+                    questions : this.questionsAsOseg()
+                }
+            ],
+            DELETE_can_issues: this.candidateIssuesForOseg()
         }
 
         return oseg;
