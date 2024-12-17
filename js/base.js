@@ -727,6 +727,21 @@ class TCTData {
         return osegIssueScores;
     }
 
+    stateMultipliersAsOseg(state) {
+        const arr = []
+        for(const pk of this.getAllCandidatePKs()) {
+
+            const muls = this.getStateMultiplierForCandidate(pk);
+            const mul = muls.filter((x) => x.fields.candidate == pk)[0];
+
+            arr.push({
+                candidateId: pk,
+                amount: mul.fields.state_multiplier
+            })
+        }
+        return arr;
+    }
+
     statesAsOseg() {
         const states = Object.values(this.states);
         const osegStates = states.map((state) => {
@@ -736,7 +751,8 @@ class TCTData {
                 abbr: state.fields.abbr,
                 electoralVotes: state.fields.electoral_votes,
                 popularVotes: state.fields.popular_votes,
-                baseIssueScores: this.issueScoresAsOseg(state)
+                baseIssueScores: this.issueScoresAsOseg(state),
+                baseCandidateStateModifiers: this.stateMultipliersAsOseg(state)
             }
         });
 
