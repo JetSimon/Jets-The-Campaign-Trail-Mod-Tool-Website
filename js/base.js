@@ -713,6 +713,153 @@ class TCTData {
         return f
     }
 
+    issueScoresAsOseg(state) {
+        const issueScores = this.getIssueScoreForState(state.pk);
+
+        const osegIssueScores = issueScores.map(is => {
+            return {
+                issueId: is.fields.issue,
+                issueScore: is.fields.state_issue_score,
+                weight: is.fields.weight
+            }
+        });
+        
+        return osegIssueScores;
+    }
+
+    statesAsOseg() {
+        const states = Object.values(this.states);
+        const osegStates = states.map((state) => {
+            return {
+                id: state.pk,
+                name: state.fields.name,
+                abbr: state.fields.abbr,
+                electoralVotes: state.fields.electoral_votes,
+                popularVotes: state.fields.popular_votes,
+                baseIssueScores: this.issueScoresAsOseg(state)
+            }
+        });
+
+        return osegStates;
+    }
+
+    fixStance(stance) {
+        if(stance == "'" || stance == null) {
+            return "";
+        }
+        return stance;
+    }
+
+    issuesAsOseg() {
+        const issues = Object.values(this.issues);
+        
+        return issues.map((issue) => {
+            return {
+                id: issue.pk,
+                name: issue.fields.name,
+                description: issue.fields.description,
+                stances : [
+                    issue.fields.stance_1,
+                    issue.fields.stance_2,
+                    issue.fields.stance_3,
+                    issue.fields.stance_4,
+                    issue.fields.stance_5,
+                    issue.fields.stance_6,
+                    issue.fields.stance_7
+                ],
+                stanceDescriptions : [
+                    this.fixStance(issue.fields.stance_desc_1),
+                    this.fixStance(issue.fields.stance_desc_2),
+                    this.fixStance(issue.fields.stance_desc_3),
+                    this.fixStance(issue.fields.stance_desc_4),
+                    this.fixStance(issue.fields.stance_desc_5),
+                    this.fixStance(issue.fields.stance_desc_6),
+                    this.fixStance(issue.fields.stance_desc_7)
+                ]
+            }
+        });
+    }
+
+    answerEffectsAsOseg(answer) {
+        const osegEffects = [];
+
+        const issueEffects = this.getIssueScoreForAnswer(answer.pk);
+        const globalEffects = this.getGlobalScoreForAnswer(answer.pk);
+        const stateEffects = this.getStateScoreForAnswer(answer.pk);
+
+        for(const effect of issueEffects) {
+            osegEffects.push({
+                answerEffectType: "Issue",
+                candidateId: -1,
+                issueId: effect.fields.issue,
+                stateId: -1,
+                amount: effect.fields.issue_score
+            });
+        }
+
+        for(const effect of globalEffects) {
+            osegEffects.push({
+                answerEffectType: "Global",
+                candidateId: effect.fields.affected_candidate,
+                issueId: -1,
+                stateId: -1,
+                amount: effect.fields.global_multiplier
+            });
+        }
+
+        for(const effect of stateEffects) {
+            osegEffects.push({
+                answerEffectType: "State",
+                candidateId: effect.fields.affected_candidate,
+                issueId: -1,
+                stateId: effect.fields.state,
+                amount: effect.fields.state_multiplier
+            });
+        }
+
+        return osegEffects;
+    }
+
+    answersAsOseg(question) {
+        const answers = this.getAnswersForQuestion(question.pk);
+        return answers.map((answer) => {
+
+            const fed = this.getAdvisorFeedbackForAnswer(answer.pk);
+            const fdbk = fed.length > 0 ? fed[0].fields.answer_feedback : ""
+
+            return {
+                id: answer.pk,
+                description: answer.fields.description,
+                feedback: fdbk,
+                answerEffects: this.answerEffectsAsOseg(answer)
+            }
+        });
+    }
+
+    questionsAsOseg() {
+        const questions = this.questions.values().toArray();
+        console.log(questions)
+        return questions.map((question) => {
+            return {
+                id: question.pk,
+                description: question.fields.description,
+                answers: this.answersAsOseg(question),
+                keepInPlaceIfQuestionsShuffled: false
+            }
+        });
+    }
+
+    exportToOseg() {
+        const oseg = {
+            candidates : ["THIS WILL NEED TO BE DONE FROM THE CODE 1 TOOL"],
+            states : this.statesAsOseg(),
+            issues : this.issuesAsOseg(),
+            questions : this.questionsAsOseg()
+        }
+
+        return oseg;
+    }
+
     getEndingCode() {
         if(this.jet_data.ending_data == null || !this.jet_data.endings_enabled) {
             return "";

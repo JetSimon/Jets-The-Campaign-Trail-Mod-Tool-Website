@@ -11,6 +11,7 @@ Vue.component('toolbar', {
         <button class="bg-gray-300 p-2 m-2 rounded hover:bg-gray-500" v-on:click="importCode2()">Import Code 2</button>
         <button class="bg-gray-300 p-2 m-2 rounded hover:bg-gray-500" v-on:click="exportCode2()">Export Code 2</button>
         <button class="bg-gray-300 p-2 m-2 rounded hover:bg-gray-500" v-on:click="clipboardCode2()">Copy to Clipboard</button>
+        <button class="bg-gray-300 p-2 m-2 rounded hover:bg-gray-500" v-on:click="clipboardOseg()">Copy OSEG to Clipboard</button>
         <button class="bg-gray-300 p-2 m-2 rounded hover:bg-gray-500" v-on:click="toggleAutosave()">{{localAutosaveEnabled ? "Disable Autosave" : "Enable Autosave"}}</button>
         <a href="https://jetsimon.com/jets-code-one-tool/" class="bg-gray-300 p-2 m-2 rounded hover:bg-gray-500"">Code 1 Tool Here</a>
     </div>
@@ -81,6 +82,11 @@ Vue.component('toolbar', {
 
         clipboardCode2: function() {
             const f = Vue.prototype.$TCT.exportCode2();
+            navigator.clipboard.writeText(f);
+        },
+
+        clipboardOseg: function() {
+            const f = JSON.stringify(Vue.prototype.$TCT.exportToOseg(), null, 4);
             navigator.clipboard.writeText(f);
         }
     }
