@@ -212,7 +212,7 @@ class TCTData {
     }
     
     getAdvisorFeedbackForAnswer(pk) {
-        return Object.values(this.answer_feedback).filter(feedback => feedback.fields.answer == pk);
+        return Object.values(this.answer_feedback).filter(feedback => feedback.fields.answer == pk && feedback.fields.candidate == 166);
     }
     
     getGlobalScoreForAnswer(pk) {
@@ -732,7 +732,19 @@ class TCTData {
         for(const pk of this.getAllCandidatePKs()) {
 
             const muls = this.getStateMultiplierForCandidate(pk);
-            const mul = muls.filter((x) => x.fields.candidate == pk)[0];
+            let mul = muls.filter((x) => x.fields.state == state.pk)[0];
+
+            if(mul == undefined) {
+                console.log("State multiplier for", state.fields.name, "not defined for candidate w pk", pk, "falling back to 1")
+
+                mul = {
+                    fields: {
+                        state_multiplier: 1.0
+                    }
+                }
+            }
+
+           
 
             arr.push({
                 candidateId: pk,
@@ -760,7 +772,7 @@ class TCTData {
     }
 
     fixStance(stance) {
-        if(stance == "'" || stance == null) {
+        if(stance == "'" || stance == null || stance == 0) {
             return "";
         }
         return stance;
@@ -773,7 +785,7 @@ class TCTData {
             return {
                 id: issue.pk,
                 name: issue.fields.name,
-                description: issue.fields.description,
+                description:  this.fixStance(issue.fields.description),
                 stances : [
                     issue.fields.stance_1,
                     issue.fields.stance_2,
@@ -885,6 +897,21 @@ class TCTData {
     }
 
     exportToOseg() {
+
+        const emptyTheme = {
+            backgroundImageUrl: "",
+            backgroundColor: "",
+            headerImageUrl: "",
+            primaryGameWindowColor: "",
+            secondaryGameWindowColor: "",
+            primaryGameWindowTextColor: "",
+            secondaryGameWindowTextColor: "",
+            bottomBannerBackgroundColor: "",
+            bottomBannerTextColor: "",
+            advisorImage: "",
+            quote: ""
+        }
+
         const oseg = {
             candidates : [],
             states : this.statesAsOseg(),
@@ -894,7 +921,14 @@ class TCTData {
                     questions : this.questionsAsOseg()
                 }
             ],
-            DELETE_can_issues: this.candidateIssuesForOseg()
+            DELETE_can_issues: this.candidateIssuesForOseg(),
+            theme: emptyTheme,
+            hasStateVisits: false,
+            scenarioName: "",
+            scenarioDescription: "",
+            scenarioImageUrl: "",
+            credits: "",
+            music: []
         }
 
         return oseg;
